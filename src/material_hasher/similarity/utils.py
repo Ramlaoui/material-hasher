@@ -43,7 +43,6 @@ def get_dataset_lemat_bulk() -> datasets.Dataset:
                 # "band_gap_indirect", #future release
                 "dos_ef",
                 # "charges", #future release
-                "functional",
                 "chemical_formula_reduced",
                 "chemical_formula_descriptive",
                 "total_magnetization",
@@ -112,7 +111,7 @@ def download_model(hf_repo_id: str, hf_model_path: str) -> str:
     return model_path
 
 
-def subsample_dataset(dataset: datasets.Dataset, x_dataset: Optional[float]=None, seed: int=0, change_order: bool=False) -> datasets.Dataset:
+def subsample_dataset(dataset: datasets.Dataset, x_dataset: Optional[float]=None, seed: int=0, change_order: bool=False, mapping_ids: Optional[Dict[str, int]]=None, ids_to_pick: Optional[List[str]]=None) -> datasets.Dataset:
     if x_dataset is not None:
         n_samples = int(np.floor(len(dataset) * x_dataset))
         if change_order:
@@ -121,6 +120,11 @@ def subsample_dataset(dataset: datasets.Dataset, x_dataset: Optional[float]=None
         else:
             samples = np.arange(n_samples)
         dataset = dataset.select(samples)
+
+    if mapping_ids is not None and ids_to_pick is not None:
+        ids_to_pick = [mapping_ids[id] for id in ids_to_pick] 
+        # Note: This assumes mapping_ids is compatible with the rows orders in the dataset
+        dataset = dataset.select(ids_to_pick)
 
     return dataset
 

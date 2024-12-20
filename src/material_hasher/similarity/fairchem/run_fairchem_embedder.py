@@ -12,13 +12,13 @@ if __name__ == "__main__":
     """
 
     parser.add_argument(
-        "--hf_model_repo_id",
+        "--hf-model-repo-id",
         type=str,
         default="fairchem/OMAT24",
         help="Hugging Face model repository ID",
     )
     parser.add_argument(
-        "--hf_model_path",
+        "--hf-model-path",
         type=str,
         default="eqV2_31M_omat_mp_salex.pt",
         help="Hugging Face model path",
@@ -28,10 +28,10 @@ if __name__ == "__main__":
     )
     parser.add_argument("--cpu", type=bool, default=False, help="Whether to use CPU")
     parser.add_argument(
-        "--batch_size", type=int, default=1, help="Batch size for inference"
+        "--batch-size", type=int, default=1, help="Batch size for inference"
     )
     parser.add_argument(
-        "--lmdb_dataset_path",
+        "--lmdb-dataset-path",
         type=str,
         default="data/lmdb",
         help="Path to the LMDB datasets",
