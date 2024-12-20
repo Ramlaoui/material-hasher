@@ -35,7 +35,7 @@ def create_ase_db(
     # REF: https://github.com/FAIR-Chem/fairchem/issues/787
     assert output_path.endswith(".aselmdb"), "Output path must end with .aselmdb"
 
-    # Currently, there are no unique ids in LeMat dataset, using immutable_id with appearance order
+    # Currently, there are no unique ids in LeMat dataset, using immutable_id, functional
 
     output_path = Path(output_path)
     os.makedirs(output_path.parent, exist_ok=True)
@@ -59,8 +59,8 @@ def create_ase_db(
                     row, add_targets=add_targets, add_forces=add_forces
                 )
 
-                mappings[j] = str(row["immutable_id"]) + "_" + str(i * db_length + j) # immutable_id is sometimes None
-                db.write(atoms, data={"id": row["immutable_id"]})
+                mappings[j] = str(row["immutable_id"]) + "_" + str(row["functional"]) # immutable_id is sometimes None
+                db.write(atoms, data={"id": row["immutable_id"] + "_" + row["functional"]})
         json.dump(mappings, open(output_path.parent / f"mapping_{i}.json", "w"))
 
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--subsample",
-        type=int,
+        type=float,
         default=1,
         help="Subsample the dataset by a factor",
     )
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     dataset = get_dataset_lemat_bulk()
-    dataset = subsample_dataset(dataset, args.subsample, change_order=False)
+    dataset = subsample_dataset(dataset, args.subsample, change_order=True)
 
     create_ase_db(
         dataset, args.output_path, args.separate_db, args.add_targets, args.add_forces

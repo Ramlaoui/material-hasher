@@ -43,7 +43,6 @@ def get_dataset_lemat_bulk() -> datasets.Dataset:
                 # "band_gap_indirect", #future release
                 "dos_ef",
                 # "charges", #future release
-                "functional",
                 "chemical_formula_reduced",
                 "chemical_formula_descriptive",
                 "total_magnetization",
