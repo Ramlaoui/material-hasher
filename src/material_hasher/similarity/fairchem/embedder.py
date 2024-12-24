@@ -3,23 +3,21 @@ import os
 import pickle
 from pathlib import Path
 
+import ase
 import h5py
 import numpy as np
 import tqdm
 import yaml
 from ase.filters import FrechetCellFilter
 from ase.optimize import FIRE
-import ase
+from material_hasher.similarity.utils import get_atoms_from_row
 
 from fairchem.core import OCPCalculator
 from fairchem.core.common.tutorial_utils import generate_yml_config
 
-from material_hasher.similarity.utils import get_atoms_from_row
-
 
 class BaseFairChemEmbedder:
-    """ABClass to embed structures using a FairChem model. 
-    """
+    """ABClass to embed structures using a FairChem model."""
 
     def add_model_hook(self):
         raise NotImplementedError
@@ -27,6 +25,7 @@ class BaseFairChemEmbedder:
     def load_model_from_path(self, model_path, cpu=False):
         calc = OCPCalculator(checkpoint_path=model_path, cpu=cpu)
         if not self.trained:
+            print("⚠️ Loading an untrained model because trained is set to False.")
             config = calc.trainer.config
 
             config["dataset"] = {
@@ -79,7 +78,7 @@ class FairChemEmbedder(BaseFairChemEmbedder):
         self.calc.trainer.model.backbone.norm.register_forward_hook(hook_norm_block)
 
     def relax_atoms(self, atoms: ase.Atoms) -> ase.Atoms:
-        """ Relax the atoms using the FIRE optimizer
+        """Relax the atoms using the FIRE optimizer
         TODO: Add the option to use the BFGS optimizer (or other)
         WARNING: This function modifies the atoms object
 
@@ -138,7 +137,6 @@ class BatchedFairChemEmbedder(BaseFairChemEmbedder):
     buffer_size : int
         Number of embeddings to save in the buffer before saving them to an h5 file
     """
-
 
     def __init__(
         self,
@@ -265,15 +263,26 @@ class BatchedFairChemEmbedder(BaseFairChemEmbedder):
 
         files = os.listdir(dbs_path)
         dbs_paths = [
-            os.path.join(dbs_path, file) for file in files if file.endswith(".aselmdb")
+            str(os.path.join(dbs_path, file))
+            for file in files
+            if file.endswith(".aselmdb")
         ]
-        dbs_paths.sort()
+
+        dbs_paths = np.sort(dbs_paths).tolist()
+
         mapping_paths = [
-            os.path.join(dbs_path, file) for file in files if file.endswith(".json")
+            str(os.path.join(dbs_path, file))
+            for file in files
+            if file.endswith(".json")
         ]
-        mapping_paths = mapping_paths.sort()
+
+        mapping_paths = np.sort(mapping_paths).tolist()
 
         for i, (db_path, mapping_path) in enumerate(zip(dbs_paths, mapping_paths)):
+            assert (
+                db_path.split("_")[-1].split(".")[0]
+                == mapping_path.split("_")[-1].split(".")[0]
+            ), "The mapping file does not correspond to the database file"
             if (
                 f"features_{i}.pkl" in os.listdir(save_embeddings_path)
                 or i < index_start

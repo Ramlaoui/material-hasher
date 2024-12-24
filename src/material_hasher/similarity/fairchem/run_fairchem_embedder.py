@@ -1,6 +1,6 @@
 import argparse
 
-from material_hasher.similarity.fairchem.embedder import BatchedFairChemEmbedder, FairChemEmbedder
+from material_hasher.similarity.fairchem.embedder import BatchedFairChemEmbedder
 from material_hasher.similarity.utils import download_model
 
 if __name__ == "__main__":
