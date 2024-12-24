@@ -1,5 +1,4 @@
 import json
-from collections import defaultdict
 import os
 import pickle
 from pathlib import Path
@@ -153,7 +152,7 @@ class BatchedFairChemEmbedder(BaseFairChemEmbedder):
         self.batch_size = batch_size
 
         self.calc = None
-        self.features = defaultdict(lambda: defaultdict(dict))
+        self.features = {}
         self.h5_file = None
         self.mapping_dict = None
         self.buffer_size = buffer_size
@@ -208,8 +207,10 @@ class BatchedFairChemEmbedder(BaseFairChemEmbedder):
                 sid_ = str(int(sid.cpu()))
                 if self.mapping_dict is not None:
                     sid_ = self.mapping_dict[sid_]
-                self.features[sid_]["energy"] = emb.sum(axis=0)
-                self.features[sid_]["all"] = emb_all.sum(axis=0)
+                self.features[sid_] = {
+                    "energy": emb.sum(axis=0),
+                    "all": emb_all.sum(axis=0),
+                }
 
         self.calc.trainer.model.output_heads.energy.register_forward_hook(
             hook_energy_block
