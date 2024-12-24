@@ -144,10 +144,10 @@ def concatenate_embeddings_dicts(embeddings_path: str, output_path: Optional[str
     return embeddings_dict
 
 
-def embeddings_dict_to_numpy(embeddings_dict: Dict[str, np.ndarray]) -> Tuple[np.ndarray, List[str]]:
+def embeddings_dict_to_numpy(embeddings_dict: Dict[str, np.ndarray], embed_type: Optional[str]) -> Tuple[np.ndarray, List[str]]:
     all_features = []
     keys = list(embeddings_dict.keys())
     for key in embeddings_dict:
-        all_features.append(embeddings_dict[key].reshape(1, -1))
+        all_features.append(embeddings_dict[key][embed_type].reshape(1, -1))
 
     return np.concatenate(all_features), keys

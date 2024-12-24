@@ -26,10 +26,7 @@ if __name__ == "__main__":
         default=HF_MODEL_PATH,
         help="Hugging Face model path",
     )
-    parser.add_argument(
-        "--trained", type=bool, default=True, help="Whether the model is trained"
-    )
-    parser.add_argument("--cpu", type=bool, default=False, help="Whether to use CPU")
+    parser.add_argument("--cpu", action="store_true", help="Whether to use CPU")
     parser.add_argument(
         "--batch-size", type=int, default=1, help="Batch size for inference"
     )
@@ -57,15 +54,20 @@ if __name__ == "__main__":
         default=None,
         help="DB index to end embeddings from. Can be useful to parallelize the embeddings generation",
     )
+    parser.add_argument(
+        "--use-trained", 
+        action="store_true",
+        help="Whether the model is trained"
+    )
 
     args = parser.parse_args()
 
     model_path = download_model(args.hf_model_repo_id, args.hf_model_path)
 
-    print("⚠️ Using a {} model".format("trained" if args.trained else "untrained"))
+    print("⚠️ Using a {} model".format("trained" if args.use_trained else "untrained"))
 
     batched_embedder = BatchedFairChemEmbedder(
-        model_path, trained=args.trained, cpu=args.cpu, batch_size=args.batch_size
+        model_path, trained=args.use_trained, cpu=args.cpu, batch_size=args.batch_size
     )
     batched_embedder.load_model_from_path()
     batched_embedder.run_batched_inference(
