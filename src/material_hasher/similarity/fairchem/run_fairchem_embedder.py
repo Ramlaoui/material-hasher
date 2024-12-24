@@ -63,7 +63,7 @@ if __name__ == "__main__":
     model_path = download_model(args.hf_model_repo_id, args.hf_model_path)
 
     batched_embedder = BatchedFairChemEmbedder(
-        model_path, args.trained, args.cpu, args.batch_size
+        model_path, trained=args.trained, cpu=args.cpu, batch_size=args.batch_size
     )
     batched_embedder.load_model_from_path()
     batched_embedder.run_batched_inference(

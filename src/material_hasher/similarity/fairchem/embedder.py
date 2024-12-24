@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 import os
 import pickle
 from pathlib import Path
@@ -23,9 +24,9 @@ class BaseFairChemEmbedder:
         raise NotImplementedError
 
     def load_model_from_path(self):
-        calc = OCPCalculator(checkpoint_path=self.model_path, cpu=self.cpu)
         if not self.trained:
             print("⚠️ Loading an untrained model because trained is set to False.")
+            calc = OCPCalculator(checkpoint_path=self.model_path, cpu=self.cpu)
             config = calc.trainer.config
 
             config["dataset"] = {
@@ -33,9 +34,10 @@ class BaseFairChemEmbedder:
             }  # for compatibility with yaml loading
 
             yaml.dump(config, open("/tmp/config.yaml", "w"))
-            calc = OCPCalculator(config_yml="/tmp/config.yaml", cpu=self.cpu)
+            self.calc = OCPCalculator(config_yml="/tmp/config.yaml", cpu=self.cpu)
+        else:
+            self.calc = OCPCalculator(checkpoint_path=self.model_path, cpu=self.cpu)
 
-        self.calc = calc
         self.add_model_hook()
         return calc
 
@@ -60,7 +62,7 @@ class FairChemEmbedder(BaseFairChemEmbedder):
         self.cpu = cpu
 
         self.calc = None
-        self.features = {}
+        self.features = defaultdict(lambda: defaultdict(dict))
 
     def add_model_hook(self):
         assert self.calc is not None, "Model not loaded"
@@ -178,7 +180,7 @@ class BatchedFairChemEmbedder(BaseFairChemEmbedder):
             natoms = input_graph.natoms.cpu().numpy()
             sids = input_graph.sid
 
-            embeddings = (
+            embeddings_energy = (
                 input_embeddings[1]["node_embedding"]
                 .embedding[:, 0, :]
                 .detach()
@@ -186,19 +188,30 @@ class BatchedFairChemEmbedder(BaseFairChemEmbedder):
                 .numpy()
             )
 
+            embeddings_all = (
+                input_embeddings[1]["node_embedding"]
+                .sum(1)
+                .embedding[:, :]
+                .detach()
+                .cpu()
+                .numpy()
+            )
+
             indices = np.cumsum(natoms)[:-1]
 
-            split_embeddings = np.split(embeddings, indices)
+            split_embeddings = np.split(embeddings_energy, indices)
+            split_embeddings_all = np.split(embeddings_all, indices)
 
             if self.h5_file is not None:
                 if len(self.features) > self.buffer_size:
                     self.save_features_h5()
 
-            for sid, emb in zip(sids, split_embeddings):
+            for sid, emb, emb_all in zip(sids, split_embeddings, split_embeddings_all):
                 sid_ = str(int(sid.cpu()))
                 if self.mapping_dict is not None:
                     sid_ = self.mapping_dict[sid_]
-                self.features[sid_] = emb.sum(axis=0)
+                self.features[sid_]["energy"] = emb.sum(axis=0)
+                self.features[sid_]["all"] = emb_all.sum(axis=0)
 
         self.calc.trainer.model.output_heads.energy.register_forward_hook(
             hook_energy_block
