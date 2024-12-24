@@ -39,7 +39,6 @@ class BaseFairChemEmbedder:
             self.calc = OCPCalculator(checkpoint_path=self.model_path, cpu=self.cpu)
 
         self.add_model_hook()
-        return calc
 
 
 class FairChemEmbedder(BaseFairChemEmbedder):
@@ -62,7 +61,7 @@ class FairChemEmbedder(BaseFairChemEmbedder):
         self.cpu = cpu
 
         self.calc = None
-        self.features = defaultdict(lambda: defaultdict(dict))
+        self.features = {}
 
     def add_model_hook(self):
         assert self.calc is not None, "Model not loaded"
@@ -154,7 +153,7 @@ class BatchedFairChemEmbedder(BaseFairChemEmbedder):
         self.batch_size = batch_size
 
         self.calc = None
-        self.features = {}
+        self.features = defaultdict(lambda: defaultdict(dict))
         self.h5_file = None
         self.mapping_dict = None
         self.buffer_size = buffer_size
@@ -190,8 +189,7 @@ class BatchedFairChemEmbedder(BaseFairChemEmbedder):
 
             embeddings_all = (
                 input_embeddings[1]["node_embedding"]
-                .sum(1)
-                .embedding[:, :]
+                .embedding.sum(1)[:, :]
                 .detach()
                 .cpu()
                 .numpy()
