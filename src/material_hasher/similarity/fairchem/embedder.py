@@ -22,8 +22,8 @@ class BaseFairChemEmbedder:
     def add_model_hook(self):
         raise NotImplementedError
 
-    def load_model_from_path(self, model_path, cpu=False):
-        calc = OCPCalculator(checkpoint_path=model_path, cpu=cpu)
+    def load_model_from_path(self):
+        calc = OCPCalculator(checkpoint_path=self.model_path, cpu=self.cpu)
         if not self.trained:
             print("⚠️ Loading an untrained model because trained is set to False.")
             config = calc.trainer.config
@@ -33,7 +33,7 @@ class BaseFairChemEmbedder:
             }  # for compatibility with yaml loading
 
             yaml.dump(config, open("/tmp/config.yaml", "w"))
-            calc = OCPCalculator(config_yml="/tmp/config.yaml", cpu=cpu)
+            calc = OCPCalculator(config_yml="/tmp/config.yaml", cpu=self.cpu)
 
         self.calc = calc
         self.add_model_hook()
@@ -50,14 +50,14 @@ class FairChemEmbedder(BaseFairChemEmbedder):
         Path to the model checkpoint
     trained : bool
         Whether the model was trained or not
-    device : str
-        Device to use for inference (e.g. "cuda:0" or "cpu")
+    cpu : bool
+        Whether to use the cpu to run inference on or the gpu if one is found
     """
 
-    def __init__(self, model_path: str, trained: bool, device: str):
+    def __init__(self, model_path: str, trained: bool, cpu: bool):
         self.model_path = model_path
         self.trained = trained
-        self.device = device
+        self.cpu = cpu
 
         self.calc = None
         self.features = {}
@@ -130,8 +130,8 @@ class BatchedFairChemEmbedder(BaseFairChemEmbedder):
         Path to the model checkpoint
     trained : bool
         Whether the model was trained or not
-    device : str
-        Device to use for inference (e.g. "cuda:0" or "cpu")
+    cpu : bool
+        Whether to use the cpu or not.
     batch_size : int
         Batch size to use for inference
     buffer_size : int
@@ -142,13 +142,13 @@ class BatchedFairChemEmbedder(BaseFairChemEmbedder):
         self,
         model_path,
         trained,
-        device,
+        cpu,
         batch_size,
         buffer_size=1000,
     ):
         self.model_path = model_path
         self.trained = trained
-        self.device = device
+        self.cpu = cpu
         self.batch_size = batch_size
 
         self.calc = None
@@ -225,7 +225,7 @@ class BatchedFairChemEmbedder(BaseFairChemEmbedder):
                 "amp": True,
                 "gpus": 1,
                 "task.prediction_dtype": "float16",
-                "logger": "tensorboard",  # don't use wandb!
+                "logger": "wandb",
                 # Test data - prediction only so no regression
                 "test_dataset.src": db_path,
                 "test_dataset.format": "ase_db",

@@ -65,7 +65,7 @@ if __name__ == "__main__":
     batched_embedder = BatchedFairChemEmbedder(
         model_path, args.trained, args.cpu, args.batch_size
     )
-    batched_embedder.load_model_from_path(model_path, args.cpu)
+    batched_embedder.load_model_from_path()
     batched_embedder.run_batched_inference(
         args.lmdb_dataset_path, args.output_path, args.index_start, args.index_end
     )
