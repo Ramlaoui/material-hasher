@@ -3,6 +3,9 @@ import argparse
 from material_hasher.similarity.fairchem.embedder import BatchedFairChemEmbedder, FairChemEmbedder
 from material_hasher.similarity.utils import download_model
 
+HF_MODEL_REPO_ID = "fairchem/OMAT24"
+HF_MODEL_PATH = "eqV2_31M_omat_mp_salex.pt"
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
@@ -14,13 +17,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--hf-model-repo-id",
         type=str,
-        default="fairchem/OMAT24",
+        default=HF_MODEL_REPO_ID,
         help="Hugging Face model repository ID",
     )
     parser.add_argument(
         "--hf-model-path",
         type=str,
-        default="eqV2_31M_omat_mp_salex.pt",
+        default=HF_MODEL_PATH,
         help="Hugging Face model path",
     )
     parser.add_argument(
